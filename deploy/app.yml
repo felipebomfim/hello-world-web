@@ -1,0 +1,5 @@
+name: hello-world-web
+type: static
+host: hello-world-web.felipedev.com.br
+static_dir: ./apps/hello-world-web
+health_path: /
