@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -16,12 +17,13 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build
+      - name: Build (Vite)
         run: npm run build
 
+      # Upload arquivos estáticos
       - name: Upload dist
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -29,8 +31,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "dist/*"
-          target: "/home/admin/infra/apps/${{ github.event.repository.name }}/"
+          target: "/srv/infra/apps/${{ github.event.repository.name }}/"
+          strip_components: 0
 
+      # Upload do manifesto
       - name: Upload manifest
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -38,8 +42,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "deploy/app.yml"
-          target: "/home/admin/infra/apps/${{ github.event.repository.name }}/deploy/"
+          target: "/srv/infra/apps/${{ github.event.repository.name }}/deploy/"
+          strip_components: 0
 
+      # Registrar e subir container
       - name: Register app and start
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -47,5 +53,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/admin/infra
+            set -e
+            cd /srv/infra
             ./scripts/register-app.sh "${{ github.event.repository.name }}"
