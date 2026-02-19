@@ -50,9 +50,9 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/*"
+          source: "dist/**"
           target: "/srv/infra/apps/${{ github.event.repository.name }}/"
-          strip_components: 0
+          strip_components: 1
 
       # Upload da pasta deploy/ (inclui deploy/app.yml)
       - name: Upload deploy folder
