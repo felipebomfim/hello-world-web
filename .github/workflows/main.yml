@@ -23,22 +23,38 @@ jobs:
       - name: Build (Vite)
         run: npm run build
 
+      # (Opcional, mas útil) confirma que dist tem conteúdo
       - name: Debug dist
         run: |
-          ls -la
-          ls -la dist || true
-          test -d dist || (echo "dist/ não existe" && exit 1)
-          test -n "$(ls -A dist)" || (echo "dist/ está vazio" && exit 1)
+          ls -la dist
+          test -f dist/index.html
 
-      - name: Upload dist
+      # Limpa o diretório do app no servidor para evitar lixo de deploy antigo
+      - name: Clean app dir on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}   # deployer
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            APP="${{ github.event.repository.name }}"
+            mkdir -p "/srv/infra/apps/$APP"
+            rm -rf "/srv/infra/apps/$APP"/*
+            mkdir -p "/srv/infra/apps/$APP/deploy"
+
+      # Upload do conteúdo do dist (index.html e assets vão para a raiz do app)
+      - name: Upload dist content
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/"
+          source: "dist/*"
           target: "/srv/infra/apps/${{ github.event.repository.name }}/"
+          strip_components: 0
 
+      # Upload da pasta deploy/ (inclui deploy/app.yml)
       - name: Upload deploy folder
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -47,8 +63,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "deploy/"
           target: "/srv/infra/apps/${{ github.event.repository.name }}/"
+          strip_components: 0
 
-      # Registrar e subir container
+      # Registrar e subir container (healthcheck de até 120s roda dentro do script)
       - name: Register app and start
         uses: appleboy/ssh-action@v1.0.3
         with:
