@@ -47,7 +47,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "deploy/app.yml"
-          target: "/srv/infra/apps/${{ github.event.repository.name }}/deploy/"
+          target: "/srv/infra/apps/${{ github.event.repository.name }}/"
           strip_components: 0
 
       # Registrar e subir container
