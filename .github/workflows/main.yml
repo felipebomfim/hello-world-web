@@ -23,16 +23,21 @@ jobs:
       - name: Build (Vite)
         run: npm run build
 
-      # Upload arquivos estáticos
+      - name: Debug dist
+        run: |
+          ls -la
+          ls -la dist || true
+          test -d dist || (echo "dist/ não existe" && exit 1)
+          test -n "$(ls -A dist)" || (echo "dist/ está vazio" && exit 1)
+
       - name: Upload dist
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/*"
+          source: "dist/"
           target: "/srv/infra/apps/${{ github.event.repository.name }}/"
-          strip_components: 0
 
       # Upload do manifesto
       - name: Upload manifest
