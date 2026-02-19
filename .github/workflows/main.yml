@@ -39,16 +39,14 @@ jobs:
           source: "dist/"
           target: "/srv/infra/apps/${{ github.event.repository.name }}/"
 
-      # Upload do manifesto
-      - name: Upload manifest
+      - name: Upload deploy folder
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "deploy/app.yml"
+          source: "deploy/"
           target: "/srv/infra/apps/${{ github.event.repository.name }}/"
-          strip_components: 0
 
       # Registrar e subir container
       - name: Register app and start
